@@ -35,13 +35,20 @@ test('compiled HTML has no external resources or scripts', async () => {
 test('section content, labels, and footer are present', async () => {
   const { html, text, subject } = await render(report(), CONFIG, NOW);
   assert.equal(subject, 'env0 daily status: 3 awaiting approval · 11 off main');
-  for (const s of ['Waiting for approval', 'Not tracking main', 'No revision set', 'Destroy', 'Branch or tag (inherited)', 'acme-infra/network', 'Source: env0 API', 'workflow sub-environments not included', 'This is an automated report.', 'America/New_York']) {
+  for (const s of ['Waiting for approval', 'Not tracking main', 'Could not be checked', 'Target branch', 'Destroy', 'No deployment record', 'Source: env0 API', 'workflow sub-environments not included', 'This is an automated report.', 'America/New_York']) {
     assert.ok(html.includes(s), `html has ${s}`);
     assert.ok(text.toLowerCase().includes(s.toLowerCase()), `text has ${s}`);
   }
   assert.ok(html.includes('2d 4h') && text.includes('waiting 2d 4h (over 24h)'));
   assert.ok(text.includes('[DESTROY]'));
-  assert.ok(text.includes("These follow their repository's default branch, which this report can't confirm is main."));
+  assert.ok(html.includes('From template') && text.includes('develop (from template)'));
+  assert.ok(html.includes('7d ago') && text.includes('last deployed 7d ago (Mar 2, 2026)'));
+  assert.ok(html.includes('title="Mar 2, 2026"'), 'absolute date on hover');
+  assert.ok(text.includes('last deployed never'));
+  for (const gone of ['Requested by', 'Branch or tag', 'Expected branch', 'removes infrastructure', 'Action</th>']) {
+    assert.ok(!html.includes(gone), `html has no ${gone}`);
+    assert.ok(!text.toLowerCase().includes(gone.toLowerCase()), `text has no ${gone}`);
+  }
 });
 
 test('no links are rendered unless ENV0_APP_URL is configured', async () => {
@@ -62,11 +69,11 @@ test('row cap shows "and N more" while summary counts stay true totals', () => {
   const text = buildText(r, config, NOW);
   assert.ok(mjml.includes('And 1 more not shown.'), 'waiting overflow');
   assert.ok(mjml.includes('And 9 more not shown.'), 'off-branch overflow');
-  assert.ok(mjml.includes('And 2 more not shown.'), 'unknown overflow');
+  assert.ok(mjml.includes('And 1 more not shown.'), 'unchecked overflow');
   assert.ok(text.includes('And 9 more not shown.'));
   assert.match(mjml, />3<\/div><div[^>]*>Awaiting approval/);
   assert.match(mjml, />11<\/div><div[^>]*>Not tracking main/);
-  assert.match(text, /^3 awaiting approval · 11 not tracking main · 4 no revision set$/m);
+  assert.match(text, /^3 awaiting approval · 11 not tracking main · 3 could not be checked$/m);
   // Rows rendered: 2 per section.
   assert.equal((mjml.match(/<tr valign="top"><td/g) ?? []).length, 6);
 });
@@ -78,7 +85,7 @@ test('all-clear output keeps every section with a one-line message', async () =>
   assert.deepEqual(r.counts, { waiting: 0, offBranch: 0, unknownRevision: 0, totalActive: 2 });
   const { html, text, subject } = await render(r, CONFIG, NOW);
   assert.equal(subject, 'env0 daily status: all clear');
-  for (const s of ['No deployments are waiting for approval.', 'Every environment with a known revision tracks main.', 'Every environment has a revision this report could check.']) {
+  for (const s of ['No deployments are waiting for approval.', 'Every checked environment tracks main.', 'Every active environment was checked.']) {
     assert.ok(html.includes(s), s);
     assert.ok(text.includes(s), s);
   }
@@ -95,7 +102,7 @@ test('300-environment fixture stays under 90 KB, trimming rows only as needed', 
   // True totals are still shown, and the overflow lines match the rows actually listed.
   assert.ok(out.html.includes(`And ${100 - out.maxRows} more not shown.`));
   assert.ok(out.html.includes(`And ${200 - out.maxRows} more not shown.`));
-  assert.match(out.text, /^100 awaiting approval · 200 not tracking main · 100 no revision set$/m);
+  assert.match(out.text, /^100 awaiting approval · 200 not tracking main · 100 could not be checked$/m);
   if (out.maxRows < config.maxRows) {
     assert.ok(out.warnings.some((w) => w.includes(`at most ${out.maxRows} rows`)));
     assert.ok(out.html.includes(`at most ${out.maxRows} rows`));

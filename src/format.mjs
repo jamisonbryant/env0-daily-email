@@ -38,6 +38,14 @@ export function formatDuration(ms) {
   return h ? `${d}d ${h}h` : `${d}d`;
 }
 
+/** Relative age with one unit: "<1m ago", "45m ago", "3h ago", "12d ago". */
+export function formatAge(ms) {
+  if (!Number.isFinite(ms) || ms < MINUTE) return '<1m ago';
+  if (ms < HOUR) return `${Math.floor(ms / MINUTE)}m ago`;
+  if (ms < DAY) return `${Math.floor(ms / HOUR)}h ago`;
+  return `${Math.floor(ms / DAY)}d ago`;
+}
+
 /** Throws a RangeError if the time zone is not a valid IANA zone. */
 export function assertTimeZone(timeZone) {
   new Intl.DateTimeFormat('en-US', { timeZone }).format(0);
@@ -82,31 +90,4 @@ export function formatDateTime(value, timeZone) {
     minute: '2-digit',
     timeZoneName: 'short',
   }).format(d);
-}
-
-/**
- * Reduces a repository URL to its path, without scheme, host, credentials, or ".git":
- * "https://git.example.com/acme-infra/network.git" -> "acme-infra/network",
- * "git@git.example.com:acme-infra/network.git" -> "acme-infra/network".
- */
-export function repositoryPath(url) {
-  if (typeof url !== 'string' || url.trim() === '') return null;
-  let s = url.trim();
-  const scp = s.match(/^[^@/\s]+@[^:/\s]+:(.+)$/);
-  if (scp) {
-    s = scp[1];
-  } else {
-    try {
-      s = new URL(s).pathname;
-    } catch {
-      // Not a URL; keep as is.
-    }
-  }
-  s = s.replace(/^\/+/, '').replace(/\/+$/, '').replace(/\.git$/i, '');
-  return s || null;
-}
-
-/** Pluralizes a simple English noun phrase. */
-export function plural(count, singular, pluralForm = `${singular}s`) {
-  return `${count} ${count === 1 ? singular : pluralForm}`;
 }

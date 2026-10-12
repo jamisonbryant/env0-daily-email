@@ -14,9 +14,9 @@ import {
   escapeHtml,
   formatDate,
   formatDateTime,
+  formatAge,
   formatDuration,
   formatLongDate,
-  repositoryPath,
   truncate,
 } from './format.mjs';
 
@@ -25,7 +25,6 @@ const TEMPLATES = path.join(ROOT, 'templates');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_REVISION_CHARS = 48;
-const MAX_REPOSITORY_CHARS = 56;
 
 const C = {
   text: '#1d2430',
@@ -86,10 +85,10 @@ function monoValue(value, max) {
   return `<div${title} style="${MONO_VALUE}">${escapeHtml(shown)}</div>`;
 }
 
-function nameCell(row, href, secondary) {
+function nameCell(row, href, secondary, badge = '') {
   const name = escapeHtml(row.name);
   const label = href ? `<a href="${escapeHtml(href)}" style="${LINK}">${name}</a>` : name;
-  return `<td style="${CELL};word-break:break-word"><b>${label}</b><div style="${SUB}">${secondary}</div></td>`;
+  return `<td style="${CELL};word-break:break-word"><b>${label}</b>${badge}<div style="${SUB}">${secondary}</div></td>`;
 }
 
 function table(headers, rows) {
@@ -113,42 +112,54 @@ function overflowNote(total, shown) {
 }
 
 const DESTROY_LABEL =
-  `<span style="padding:0 5px;border:1px solid ${C.destroyBorder};border-radius:3px;background:${C.destroyBg};` +
-  `color:${C.destroyText};font-size:12px;font-weight:600">Destroy</span>`;
+  ` <span style="padding:0 5px;border:1px solid ${C.destroyBorder};border-radius:3px;background:${C.destroyBg};` +
+  `color:${C.destroyText};font-size:12px;font-weight:600;white-space:nowrap">Destroy</span>`;
+
+/** Right-aligned duration cell, highlighted in the caution color when over 24 hours. */
+function ageCell(ms, text, title = '') {
+  const over = ms != null && ms > DAY_MS;
+  const t = title ? ` title="${escapeHtml(title)}"` : '';
+  return (
+    `<td${t} style="${LAST_CELL};text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums` +
+    `${over ? `;color:${C.caution};font-weight:600` : ''}">${escapeHtml(text)}</td>`
+  );
+}
 
 function waitingRows(rows, links) {
   return rows.map((r) => {
-    const over = r.waitedMs != null && r.waitedMs > DAY_MS;
     const waited = r.waitedMs == null ? 'Unknown' : formatDuration(r.waitedMs);
-    const action = r.isDestroy ? DESTROY_LABEL : escapeHtml(r.action);
-    const secondary = `${escapeHtml(r.projectName)} &middot; Requested by ${escapeHtml(r.requestedBy)}`;
-    const waitStyle = `${LAST_CELL};text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums${over ? `;color:${C.caution};font-weight:600` : ''}`;
     return (
-      `<tr valign="top">${nameCell(r, links.deployment(r), secondary)}` +
-      `<td style="${CELL}">${action}</td><td style="${waitStyle}">${escapeHtml(waited)}</td></tr>`
+      `<tr valign="top">${nameCell(r, links.deployment(r), escapeHtml(r.projectName), r.isDestroy ? DESTROY_LABEL : '')}` +
+      `${ageCell(r.waitedMs, waited)}</tr>`
     );
   });
 }
+
+const SOURCE_NOTES = { template: 'From template', 'repository-default': 'Repository default' };
 
 function offBranchRows(rows, links, timeZone) {
   return rows.map((r) => {
-    const deployed = r.lastDeployedAt ? formatDate(r.lastDeployedAt, timeZone) ?? 'Unknown' : 'Never';
-    const secondary = `${escapeHtml(r.projectName)} &middot; Last deployed <span style="white-space:nowrap">${escapeHtml(deployed)}</span>`;
+    const note = SOURCE_NOTES[r.source] ? `<div style="${SUB}">${SOURCE_NOTES[r.source]}</div>` : '';
+    const age = r.lastDeployedAt ? formatAge(r.sinceMs) : 'Never';
+    const date = r.lastDeployedAt ? formatDate(r.lastDeployedAt, timeZone) ?? '' : '';
     return (
-      `<tr valign="top">${nameCell(r, links.environment(r), secondary)}` +
-      `<td style="${LAST_CELL}">${monoValue(r.revision, MAX_REVISION_CHARS)}<div style="${SUB}">${escapeHtml(r.kind)}</div></td></tr>`
+      `<tr valign="top">${nameCell(r, links.environment(r), escapeHtml(r.projectName))}` +
+      `<td style="${CELL}">${monoValue(r.revision, MAX_REVISION_CHARS)}${note}</td>${ageCell(r.sinceMs, age, date)}</tr>`
     );
   });
 }
 
+const UNCHECKED_REASONS = {
+  'no-deployment': 'No deployment record',
+  unreadable: 'Lookup failed',
+};
+
 function unknownRows(rows, links) {
-  return rows.map((r) => {
-    const repoPath = r.reason === 'repository-default' ? repositoryPath(r.repository) : null;
-    const repo = repoPath
-      ? monoValue(repoPath, MAX_REPOSITORY_CHARS)
-      : `<span style="color:${C.muted}">${r.reason === 'no-deployment' ? 'No deployment record' : 'Not available'}</span>`;
-    return `<tr valign="top">${nameCell(r, links.environment(r), escapeHtml(r.projectName))}<td style="${LAST_CELL}">${repo}</td></tr>`;
-  });
+  return rows.map(
+    (r) =>
+      `<tr valign="top">${nameCell(r, links.environment(r), escapeHtml(r.projectName))}` +
+      `<td style="${LAST_CELL};color:${C.muted}">${UNCHECKED_REASONS[r.reason] ?? 'Unknown'}</td></tr>`,
+  );
 }
 
 function sectionHeading(title, count) {
@@ -167,7 +178,7 @@ export function describe(report, config, generatedAt) {
   const subject = buildSubject(config.title, counts, trackedBranch);
   const preheader =
     `${counts.waiting} awaiting approval, ${counts.offBranch} not tracking ${trackedBranch}, ` +
-    `${counts.unknownRevision} with no revision set, across ${counts.totalActive} active environments.`;
+    `${counts.unknownRevision} could not be checked, across ${counts.totalActive} active environments.`;
   return {
     subject,
     preheader,
@@ -187,7 +198,7 @@ export function buildMjml(report, config, generatedAt) {
   const figures = [
     [report.counts.waiting, 'Awaiting approval'],
     [report.counts.offBranch, `Not tracking ${branch}`],
-    [report.counts.unknownRevision, 'No revision set'],
+    [report.counts.unknownRevision, 'Could not be checked'],
   ]
     .map(
       ([n, label]) =>
@@ -200,14 +211,10 @@ export function buildMjml(report, config, generatedAt) {
   const a = report.waiting;
   const sectionA = fill(section, {
     HEADING: sectionHeading('Waiting for approval', a.length),
-    DESCRIPTION:
-      'Deployments paused until someone approves them, oldest first. Waits over 24 hours are highlighted. ' +
-      'Approving a Destroy removes infrastructure.',
+    DESCRIPTION: 'Deployments paused until someone approves them, oldest first. Waits over 24 hours are highlighted.',
     BODY: a.length
-      ? table(
-          [['Environment', 'left'], ['Action', 'left', 76], ['Waiting', 'right', 64]],
-          waitingRows(a.slice(0, max), links),
-        ) + overflowNote(a.length, max)
+      ? table([['Environment', 'left'], ['Waiting', 'right', 80]], waitingRows(a.slice(0, max), links)) +
+        overflowNote(a.length, max)
       : emptyNote('No deployments are waiting for approval.'),
   });
 
@@ -216,28 +223,23 @@ export function buildMjml(report, config, generatedAt) {
     HEADING: sectionHeading(`Not tracking ${branch}`, b.length),
     DESCRIPTION:
       `Environments set to deploy a revision other than ${code(branch)}, by project. ` +
-      '&ldquo;Inherited&rdquo; means the revision comes from the template.',
+      'Deployments more than 24 hours old are highlighted.',
     BODY: b.length
       ? table(
-          [['Environment', 'left', '58%'], ['Revision', 'left', '42%']],
+          [['Environment', 'left'], ['Revision', 'left', '30%'], ['Last deployed', 'right', 92]],
           offBranchRows(b.slice(0, max), links, config.timeZone),
         ) + overflowNote(b.length, max)
-      : emptyNote(`Every environment with a known revision tracks ${branch}.`),
+      : emptyNote(`Every checked environment tracks ${branch}.`),
   });
 
   const c = report.unknownRevision;
-  const anyNoRecord = c.some((r) => r.reason !== 'repository-default');
   const sectionC = fill(section, {
-    HEADING: sectionHeading('No revision set', c.length),
-    DESCRIPTION:
-      `These follow their repository&rsquo;s default branch, which this report can&rsquo;t confirm is ${code(branch)}.` +
-      (anyNoRecord
-        ? ' Where the repository shows &ldquo;No deployment record&rdquo; or &ldquo;Not available&rdquo;, the revision could not be read at all.'
-        : ''),
+    HEADING: sectionHeading('Could not be checked', c.length),
+    DESCRIPTION: 'env0 returned no readable deployment for these environments, so the branch they deploy is unknown.',
     BODY: c.length
-      ? table([['Environment', 'left', '58%'], ['Repository', 'left', '42%']], unknownRows(c.slice(0, max), links)) +
+      ? table([['Environment', 'left'], ['Reason', 'left', '36%']], unknownRows(c.slice(0, max), links)) +
         overflowNote(c.length, max)
-      : emptyNote('Every environment has a revision this report could check.'),
+      : emptyNote('Every active environment was checked.'),
   });
 
   const footerLines = [
@@ -255,7 +257,7 @@ export function buildMjml(report, config, generatedAt) {
     SUBJECT: escapeHtml(d.subject),
     PREHEADER: escapeHtml(d.preheader),
     TITLE: escapeHtml(config.title),
-    DATE_LINE: `${escapeHtml(d.dateLine)} &middot; Expected branch ${code(branch)}`,
+    DATE_LINE: `${escapeHtml(d.dateLine)} &middot; Target branch ${code(branch)}`,
     SUMMARY: figures,
     SECTIONS: sectionA + sectionB + sectionC,
     FOOTER: footerLines.join('<br />'),
@@ -309,9 +311,9 @@ export function buildText(report, config, generatedAt) {
   const { counts } = report;
   const out = [];
 
-  out.push(config.title, `${d.dateLine} · Expected branch: ${branch}`, '');
+  out.push(config.title, `${d.dateLine} · Target branch: ${branch}`, '');
   out.push(
-    `${counts.waiting} awaiting approval · ${counts.offBranch} not tracking ${branch} · ${counts.unknownRevision} no revision set`,
+    `${counts.waiting} awaiting approval · ${counts.offBranch} not tracking ${branch} · ${counts.unknownRevision} could not be checked`,
     '',
   );
 
@@ -323,32 +325,30 @@ export function buildText(report, config, generatedAt) {
     const waited = r.waitedMs == null ? 'unknown' : formatDuration(r.waitedMs);
     const flag = r.waitedMs != null && r.waitedMs > DAY_MS ? ' (over 24h)' : '';
     out.push(`- ${r.name}${r.isDestroy ? '  [DESTROY]' : ''}`);
-    out.push(`  ${r.projectName} · ${r.action} · waiting ${waited}${flag} · requested by ${r.requestedBy}`);
+    out.push(`  ${r.projectName} · waiting ${waited}${flag}`);
     const href = links.deployment(r);
     if (href) out.push(`  ${href}`);
   }
   out.push(...more(report.waiting.length), '');
 
   out.push(heading(`Not tracking ${branch} (${counts.offBranch})`));
-  if (!report.offBranch.length) out.push(`Every environment with a known revision tracks ${branch}.`);
+  if (!report.offBranch.length) out.push(`Every checked environment tracks ${branch}.`);
   for (const r of report.offBranch.slice(0, max)) {
-    const deployed = r.lastDeployedAt ? formatDate(r.lastDeployedAt, config.timeZone) : 'never';
+    const deployed = r.lastDeployedAt ? `${formatAge(r.sinceMs)} (${formatDate(r.lastDeployedAt, config.timeZone)})` : 'never';
+    const note = SOURCE_NOTES[r.source] ? ` (${SOURCE_NOTES[r.source].toLowerCase()})` : '';
     out.push(`- ${r.name}`);
-    out.push(`  ${r.projectName} · ${r.revision} (${r.kind}) · last deployed ${deployed}`);
+    out.push(`  ${r.projectName} · ${r.revision}${note} · last deployed ${deployed}`);
     const href = links.environment(r);
     if (href) out.push(`  ${href}`);
   }
   out.push(...more(report.offBranch.length), '');
 
-  out.push(heading(`No revision set (${counts.unknownRevision})`));
-  if (!report.unknownRevision.length) out.push('Every environment has a revision this report could check.');
-  else out.push(`These follow their repository's default branch, which this report can't confirm is ${branch}.`);
+  out.push(heading(`Could not be checked (${counts.unknownRevision})`));
+  if (!report.unknownRevision.length) out.push('Every active environment was checked.');
+  else out.push('env0 returned no readable deployment for these environments, so the branch they deploy is unknown.');
   for (const r of report.unknownRevision.slice(0, max)) {
-    const repo =
-      (r.reason === 'repository-default' && repositoryPath(r.repository)) ||
-      (r.reason === 'no-deployment' ? 'no deployment record' : 'repository not available');
     out.push(`- ${r.name}`);
-    out.push(`  ${r.projectName} · ${repo}`);
+    out.push(`  ${r.projectName} · ${(UNCHECKED_REASONS[r.reason] ?? 'Unknown').toLowerCase()}`);
     const href = links.environment(r);
     if (href) out.push(`  ${href}`);
   }

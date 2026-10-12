@@ -3,7 +3,7 @@
 Builds a daily HTML status email about the environments in an [env0](https://www.env0.com) organization. It answers two questions:
 
 1. **Which deployments are waiting for approval?**
-2. **Which environments are not tracking the expected branch** (`main` by default)?
+2. **Which environments are not tracking the target branch** (`main` by default)?
 
 The tool only reads data, through the env0 CLI, and writes three files: `out/email.html`, `out/email.txt` and `out/summary.json`. Sending the email is left to whatever runs the tool. In the intended setup that is a scheduled Claude Code routine that follows [`CLAUDE.md`](CLAUDE.md) and sends through a Gmail connector.
 
@@ -13,9 +13,17 @@ Sections appear in this order. Each one is always present; when it has nothing t
 
 | Section | An environment is listed when | Shows |
 |---|---|---|
-| **Waiting for approval** | Its latest deployment has status `WAITING_FOR_USER` | Environment, project, action (Deploy / Destroy), time waiting, who requested it. Oldest first. A pending destroy is labeled **Destroy**. Waits over 24 hours are highlighted in bold amber, and the duration text (`2d 4h`) shows it too |
-| **Not tracking `<branch>`** | Its revision is set and is not exactly the tracked branch, or it has no revision of its own and inherits a different one from its template | Environment, project, last deployed date, revision, and kind: `Commit` for 7–40 lowercase hex characters, otherwise `Branch or tag`, with `(inherited)` when the revision comes from the template. Sorted by project, then environment |
-| **No revision set** | Neither the environment nor its template sets a revision, so it follows the repository's default branch, which the report can't check. Also listed: environments with no readable deployment record | Environment, project, repository path (no host) |
+| **Waiting for approval** | Its latest deployment has status `WAITING_FOR_USER` | Environment, project, time waiting (`2d 4h`). Oldest first. A pending destroy gets a **Destroy** label next to the name. Waits over 24 hours are highlighted in bold amber |
+| **Not tracking `<branch>`** | The revision it deploys is not exactly the target branch (see [Which revision an environment deploys](#which-revision-an-environment-deploys)) | Environment, project, revision, and how long ago it was last deployed (`12d ago`, exact date on hover). Revisions that come from the template or the repository default are marked as such. Ages over 24 hours are highlighted in bold amber. Sorted by project, then environment |
+| **Could not be checked** | env0 returned no readable latest deployment (or its template could not be read), so the revision is unknown | Environment, project, reason (`No deployment record` or `Lookup failed`) |
+
+### Which revision an environment deploys
+
+env0 stores an environment's revision on its latest deployment. The report uses the first of these that is set:
+
+1. The latest deployment's own revision.
+2. The template's default revision.
+3. The repository's default branch. The env0 API doesn't expose it, so it is **assumed to be `main`**. This happens for environments created straight from a repository without naming a branch.
 
 Above the sections are a preheader, the title and date, and three summary figures. The footer gives the generation time and time zone, the source, scope notes, any warnings, and "This is an automated report."
 
@@ -26,7 +34,7 @@ Subject line examples:
 - `env0 daily status: 2 awaiting approval · 3 off main` (parts that are zero are left out)
 - `env0 daily status: all clear`
 
-The subject only counts the first two sections. Environments with no revision set are informational and appear only in the body.
+The subject only counts the first two sections. Environments that could not be checked appear only in the body.
 
 ## Requirements
 
@@ -43,7 +51,7 @@ All values that differ between deployments come from environment variables. None
 |---|---|---|
 | `ENV0_ORGANIZATION_ID` | required | Organization to report on |
 | `ENV0_API_KEY_ID`, `ENV0_API_KEY_SECRET` | required by the CLI | env0 API key (read by the env0 CLI, never by this tool) |
-| `REPORT_TRACKED_BRANCH` | `main` | Branch environments are expected to track |
+| `REPORT_TRACKED_BRANCH` | `main` | Target branch environments should track |
 | `REPORT_TIMEZONE` | `UTC` | IANA time zone for every displayed time |
 | `REPORT_TITLE` | `env0 daily status` | Heading and subject prefix |
 | `REPORT_MAX_ROWS` | `50` | Per-section row cap (may be lowered automatically to respect the size limit) |
@@ -163,20 +171,17 @@ This section describes the env0 CLI 2.x output that the report depends on, using
 | Waiting for approval | `deployment.status == "WAITING_FOR_USER"` | Falls back to `environment.latestDeployment.status` if the deployment can't be read |
 | Action | `deployment.type` | `deploy` or `destroy` |
 | Waiting since | `deployment.createdAt` | When the deployment was requested. `finishedAt` on a waiting deployment marks the end of its plan step |
-| Requested by | `deployment.startedBy` | A single string: `env0-system` (shown as "Automatic (env0)"), an email (shown as is), or an opaque identity-provider user ID (shown as "Unknown", because the CLI exposes no name or email for it) |
 | Configured revision | `deployment.blueprintRevision` of the latest deployment | env0 keeps an environment's revision on its latest deployment. The key is **omitted** when unset; `null` and `""` are treated the same way |
-| Template default revision | `template.revision` | Also omitted when unset. Used only when the environment has no revision of its own |
-| Repository | `template.repository` | Shown as a path, without host or `.git` |
+| Template default revision | `template.revision` | Also omitted when unset. Used only when the environment has no revision of its own. If neither is set, the repository default is assumed to be `main` |
 | Project | `project.name`, walking `parentProjectId` | Shown as `parent / child`, because sub-project names often repeat under different parents |
-| Last deployed | `deployment.finishedAt`, else `createdAt` | "Never" when the status is `NEVER_DEPLOYED` |
+| Last deployed | `deployment.finishedAt`, else `createdAt` | Shown as an age relative to the report time; "Never" when the status is `NEVER_DEPLOYED` |
 
 ## Limitations
 
-- **Requester names.** For deployments started by a person, the CLI returns only an opaque user ID, so the report shows "Unknown". Automated deployments show "Automatic (env0)".
-- **Environments with no deployment record.** Some environments have `latestDeployment: null` in `environment list`. For these, `deployment list` and `context` can also fail in CLI 2.6.0 with a decode error (`costEstimation.totalMonthlyCost` sometimes arrives as a string). The report lists them under **No revision set** as "No deployment record" instead of skipping them.
-- **Repository default branches.** The report cannot see a repository's default branch, so environments that follow it are listed under **No revision set** rather than assumed to be on `main`.
+- **Who requested a deployment** is not shown. The CLI exposes only `startedBy`, which is `env0-system` or an opaque identity-provider user ID, with no name or email.
+- **Environments with no deployment record.** Some environments have `latestDeployment: null` in `environment list`. For these, `deployment list` and `context` can also fail in CLI 2.6.0 with a decode error (`costEstimation.totalMonthlyCost` sometimes arrives as a string). The report lists them under **Could not be checked** instead of skipping them.
+- **Repository default branches** are assumed to be `main` (see above). An environment that follows a repository whose default branch is something else would be misreported.
 - **Workflow sub-environments** are not included (see above).
-- **Branch or tag.** A non-SHA revision is labeled "Branch or tag" because the data does not say which it is.
 
 ## Safety
 
@@ -190,7 +195,7 @@ This section describes the env0 CLI 2.x output that the report depends on, using
 src/collect.mjs    env0 CLI calls (spawned without a shell), envelope parsing, exit codes
 src/classify.mjs   pure classification into the three sections
 src/render.mjs     MJML generation, compile (strict validation), size guard, plain text
-src/format.mjs     escaping, durations, dates, repository paths
+src/format.mjs     escaping, durations, relative ages, dates
 src/config.mjs     environment variable parsing and validation
 src/main.mjs       orchestration and exit codes
 src/preview.mjs    renders the fixture preview

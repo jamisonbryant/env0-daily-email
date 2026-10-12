@@ -77,7 +77,7 @@ const deployments = {
   'dep-08': (({ blueprintRevision, ...rest }) => ({ ...rest, blueprintId: 'tpl-main' }))(dep('08', 'SUCCESS')),
   // Null revision; template default differs: B (inherited).
   'dep-09': dep('09', 'SUCCESS', { blueprintRevision: null, blueprintId: 'tpl-develop' }),
-  // Empty revision; template has no default: C.
+  // Empty revision; template has no default: assumed repository default (main), no section.
   'dep-10': dep('10', 'SUCCESS', { blueprintRevision: '', blueprintId: 'tpl-single-use' }),
   'dep-12': dep('12', 'WAITING_FOR_USER'),
   'dep-13': dep('13', 'SUCCESS', { blueprintRevision: 'feature/retired' }),

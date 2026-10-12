@@ -2,13 +2,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import {
+  ASSUMED_DEFAULT_BRANCH,
   buildSubject,
   classify,
   isActiveEnvironment,
   normalizeRevision,
   projectPaths,
-  requesterLabel,
-  revisionKind,
 } from '../src/classify.mjs';
 
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/snapshot.json', import.meta.url), 'utf8'));
@@ -20,7 +19,7 @@ const byName = (rows, name) => rows.find((r) => r.name === name);
 
 test('counts are true totals over active environments', () => {
   const r = classify(clone(), CONFIG, NOW);
-  assert.deepEqual(r.counts, { waiting: 3, offBranch: 11, unknownRevision: 4, totalActive: 19 });
+  assert.deepEqual(r.counts, { waiting: 3, offBranch: 11, unknownRevision: 3, totalActive: 19 });
 });
 
 test('archived and inactive environments are excluded everywhere', () => {
@@ -39,15 +38,18 @@ test('revision equal to the tracked branch is not reported', () => {
   assert.ok(!names(r.unknownRevision).includes('billing-worker-prod'));
 });
 
-test('different branch, tag-like string, short and full SHAs are off-branch with the right kind', () => {
+test('different branch, tag-like string, short and full SHAs are all off-branch', () => {
   const r = classify(clone(), CONFIG, NOW);
-  assert.equal(byName(r.offBranch, 'search-indexer-staging').kind, 'Branch or tag');
-  assert.equal(byName(r.offBranch, 'analytics-etl-dev').kind, 'Branch or tag');
-  assert.equal(byName(r.offBranch, 'edge-cache-prod').kind, 'Commit');
-  assert.equal(byName(r.offBranch, 'reporting-db-prod').kind, 'Commit');
-  assert.equal(revisionKind('a1b2c3'), 'Branch or tag', 'six hex chars is too short for a SHA');
-  assert.equal(revisionKind('A1B2C3D'), 'Branch or tag', 'uppercase is not treated as a SHA');
-  assert.equal(revisionKind('0123456789abcdef0123456789abcdef01234567'), 'Commit');
+  for (const [name, revision] of [
+    ['search-indexer-staging', 'feature/new-index'],
+    ['analytics-etl-dev', 'v2.14.0'],
+    ['edge-cache-prod', 'a1b2c3d'],
+    ['reporting-db-prod', '0123456789abcdef0123456789abcdef01234567'],
+  ]) {
+    const row = byName(r.offBranch, name);
+    assert.equal(row.revision, revision, name);
+    assert.equal(row.source, 'environment', name);
+  }
 });
 
 test('missing, null, and empty revisions are all unset', () => {
@@ -68,18 +70,34 @@ test('inherited template revision different from the tracked branch is off-branc
   const r = classify(clone(), CONFIG, NOW);
   const row = byName(r.offBranch, 'queue-workers-dev');
   assert.equal(row.revision, 'develop');
-  assert.equal(row.kind, 'Branch or tag (inherited)');
-  assert.equal(row.inherited, true);
+  assert.equal(row.source, 'template');
 });
 
-test('no revision anywhere stays in section C with the repository', () => {
+test('no revision anywhere is treated as the assumed repository default branch', () => {
+  assert.equal(ASSUMED_DEFAULT_BRANCH, 'main');
   const r = classify(clone(), CONFIG, NOW);
-  const row = byName(r.unknownRevision, 'docs-site-preview');
-  assert.equal(row.reason, 'repository-default');
-  assert.equal(row.repository, 'https://git.example.com/acme-infra/network.git');
+  const all = [...r.offBranch, ...r.unknownRevision].map((x) => x.name);
+  assert.ok(!all.includes('docs-site-preview'));
+  // With another tracked branch, it shows up off-branch, marked as the repository default.
+  const r2 = classify(clone(), { trackedBranch: 'develop' }, NOW);
+  assert.equal(byName(r2.offBranch, 'docs-site-preview').source, 'repository-default');
+  assert.equal(byName(r2.offBranch, 'docs-site-preview').revision, 'main');
+});
+
+test('environments whose deployment or template cannot be read could not be checked', () => {
+  const r = classify(clone(), CONFIG, NOW);
   assert.equal(byName(r.unknownRevision, 'legacy-vpn').reason, 'no-deployment');
   assert.equal(byName(r.unknownRevision, 'mail-relay-prod').reason, 'unreadable');
   assert.equal(byName(r.unknownRevision, 'metrics-collector-prod').reason, 'unreadable');
+});
+
+test('last deployed age comes from the latest deployment; never-deployed has none', () => {
+  const r = classify(clone(), CONFIG, NOW);
+  const row = byName(r.offBranch, 'analytics-etl-dev');
+  assert.equal(row.lastDeployedAt, '2026-03-02T16:04:00.000Z');
+  assert.equal(row.sinceMs, NOW - new Date('2026-03-02T16:04:00.000Z'));
+  assert.equal(byName(r.offBranch, 'sandbox-bootstrap').lastDeployedAt, null);
+  assert.equal(byName(r.offBranch, 'sandbox-bootstrap').sinceMs, null);
 });
 
 test('failed lookups produce warnings', () => {
@@ -91,12 +109,8 @@ test('failed lookups produce warnings', () => {
 
 test('waiting deploy vs waiting destroy', () => {
   const r = classify(clone(), CONFIG, NOW);
-  const deploy = byName(r.waiting, 'payments-api-prod');
-  const destroy = byName(r.waiting, 'network-shared');
-  assert.equal(deploy.action, 'Deploy');
-  assert.equal(deploy.isDestroy, false);
-  assert.equal(destroy.action, 'Destroy');
-  assert.equal(destroy.isDestroy, true);
+  assert.equal(byName(r.waiting, 'payments-api-prod').isDestroy, false);
+  assert.equal(byName(r.waiting, 'network-shared').isDestroy, true);
 });
 
 test('waiting is sorted oldest first with correct durations', () => {
@@ -105,15 +119,6 @@ test('waiting is sorted oldest first with correct durations', () => {
   assert.equal(r.waiting[0].waitedMs, (2 * 24 + 4) * 3_600_000);
   assert.equal(r.waiting[1].waitedMs, (3 * 60 + 12) * 60_000);
   assert.equal(r.waiting[2].waitedMs, 30_000);
-});
-
-test('requester falls back from name to email to Unknown', () => {
-  assert.equal(requesterLabel({ name: 'Sample Person', email: 'sample@example.com' }), 'Sample Person');
-  assert.equal(requesterLabel({ name: '', email: 'sample@example.com' }), 'sample@example.com');
-  assert.equal(requesterLabel('sample@example.com'), 'sample@example.com');
-  assert.equal(requesterLabel('env0-system'), 'Automatic (env0)');
-  assert.equal(requesterLabel('idp|000000'), 'Unknown');
-  assert.equal(requesterLabel(undefined), 'Unknown');
 });
 
 test('off-branch rows are sorted by project, then environment', () => {
@@ -150,6 +155,7 @@ test('tracked branch is configurable', () => {
   const r = classify(clone(), { trackedBranch: 'develop' }, NOW);
   assert.ok(!names(r.offBranch).includes('queue-workers-dev'));
   assert.ok(names(r.offBranch).includes('billing-worker-prod'));
+  assert.ok(names(r.offBranch).includes('docs-site-preview'), 'repository default is assumed to be main');
 });
 
 test('subject omits zero parts and says all clear when nothing is found', () => {

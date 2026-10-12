@@ -11,8 +11,12 @@
 // }
 
 export const WAITING_STATUS = 'WAITING_FOR_USER';
-const COMMIT_SHA = /^[0-9a-f]{7,40}$/;
-const AUTOMATION_USER = 'env0-system';
+
+/**
+ * Branch assumed for environments that set no revision anywhere: env0 then deploys the
+ * repository's default branch, which the env0 API does not expose.
+ */
+export const ASSUMED_DEFAULT_BRANCH = 'main';
 
 /** Active means not archived and not inactive. */
 export function isActiveEnvironment(env) {
@@ -24,34 +28,6 @@ export function normalizeRevision(value) {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed === '' ? null : trimmed;
-}
-
-export function revisionKind(revision, inherited = false) {
-  const base = COMMIT_SHA.test(revision) ? 'Commit' : 'Branch or tag';
-  return inherited ? `${base} (inherited)` : base;
-}
-
-/** Best available description of who started a deployment. */
-export function requesterLabel(startedBy) {
-  if (startedBy && typeof startedBy === 'object') {
-    const name = typeof startedBy.name === 'string' ? startedBy.name.trim() : '';
-    const email = typeof startedBy.email === 'string' ? startedBy.email.trim() : '';
-    return name || email || 'Unknown';
-  }
-  if (typeof startedBy === 'string') {
-    const s = startedBy.trim();
-    if (s === AUTOMATION_USER) return 'Automatic (env0)';
-    if (/^[^\s@|]+@[^\s@|]+\.[^\s@|]+$/.test(s)) return s;
-  }
-  // Opaque identity-provider IDs carry no name or email.
-  return 'Unknown';
-}
-
-export function actionLabel(type) {
-  if (type === 'deploy') return 'Deploy';
-  if (type === 'destroy') return 'Destroy';
-  if (typeof type === 'string' && type) return type.charAt(0).toUpperCase() + type.slice(1);
-  return 'Unknown';
 }
 
 /**
@@ -133,58 +109,50 @@ export function classify(snapshot, config, now) {
       waiting.push({
         ...base,
         deploymentId: latestId,
-        action: actionLabel(deployment?.type),
         isDestroy: deployment?.type === 'destroy',
         requestedAt: requestedAt ? requestedAt.toISOString() : null,
         waitedMs,
-        requestedBy: requesterLabel(deployment?.startedBy),
       });
     }
 
-    // Sections B and C: which revision does this environment follow?
+    // Sections B and C: which revision does this environment deploy?
     if (!deployment) {
-      unknownRevision.push({
-        ...base,
-        repository: null,
-        reason: latestId ? 'unreadable' : 'no-deployment',
-      });
+      unknownRevision.push({ ...base, reason: latestId ? 'unreadable' : 'no-deployment' });
       continue;
     }
 
-    const ownRevision = normalizeRevision(deployment.blueprintRevision);
-    const lastDeployedAt =
-      deployment.status === 'NEVER_DEPLOYED' ? null : deployment.finishedAt || deployment.createdAt || null;
-
-    if (ownRevision) {
-      if (ownRevision !== trackedBranch) {
-        offBranch.push({ ...base, revision: ownRevision, kind: revisionKind(ownRevision), inherited: false, lastDeployedAt });
+    // Own revision, else the template's, else the repository default (assumed).
+    let revision = normalizeRevision(deployment.blueprintRevision);
+    let source = 'environment';
+    if (!revision) {
+      const templateId = deployment.blueprintId ?? null;
+      const template = templateId ? templates[templateId] : null;
+      if (templateId && !template && failedTemplates[templateId]) {
+        templateLookupFailures += 1;
+        unknownRevision.push({ ...base, reason: 'unreadable' });
+        continue;
       }
-      continue;
-    }
-
-    const templateId = deployment.blueprintId ?? null;
-    const template = templateId ? templates[templateId] : null;
-    if (templateId && !template && failedTemplates[templateId]) templateLookupFailures += 1;
-    const inherited = normalizeRevision(template?.revision);
-    if (inherited) {
-      if (inherited !== trackedBranch) {
-        offBranch.push({ ...base, revision: inherited, kind: revisionKind(inherited, true), inherited: true, lastDeployedAt });
+      revision = normalizeRevision(template?.revision);
+      source = 'template';
+      if (!revision) {
+        revision = ASSUMED_DEFAULT_BRANCH;
+        source = 'repository-default';
       }
-      continue;
     }
 
-    unknownRevision.push({
-      ...base,
-      repository: typeof template?.repository === 'string' ? template.repository : null,
-      reason: template ? 'repository-default' : 'unreadable',
-    });
+    if (revision !== trackedBranch) {
+      const lastDeployedAt =
+        deployment.status === 'NEVER_DEPLOYED' ? null : deployment.finishedAt || deployment.createdAt || null;
+      const sinceMs = lastDeployedAt ? Math.max(0, now - new Date(lastDeployedAt)) : null;
+      offBranch.push({ ...base, revision, source, lastDeployedAt, sinceMs: Number.isNaN(sinceMs) ? null : sinceMs });
+    }
   }
 
   if (deploymentLookupFailures) {
-    warnings.push(`The latest deployment could not be read for ${countEnvironments(deploymentLookupFailures)} listed under No revision set.`);
+    warnings.push(`The latest deployment could not be read for ${countEnvironments(deploymentLookupFailures)} listed under Could not be checked.`);
   }
   if (templateLookupFailures) {
-    warnings.push(`Template details could not be read for ${countEnvironments(templateLookupFailures)} listed under No revision set.`);
+    warnings.push(`Template details could not be read for ${countEnvironments(templateLookupFailures)} listed under Could not be checked.`);
   }
 
   waiting.sort((a, b) => (b.waitedMs ?? -1) - (a.waitedMs ?? -1) || a.name.localeCompare(b.name));
