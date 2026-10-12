@@ -1,0 +1,680 @@
+{
+  "now": "2026-03-10T14:00:00.000Z",
+  "snapshot": {
+    "environments": [
+      {
+        "id": "env-01",
+        "name": "payments-api-prod",
+        "projectId": "proj-payments",
+        "organizationId": "org-example",
+        "status": "WAITING_FOR_USER",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-01",
+          "status": "WAITING_FOR_USER"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-02",
+        "name": "network-shared",
+        "projectId": "proj-platform",
+        "organizationId": "org-example",
+        "status": "WAITING_FOR_USER",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-02",
+          "status": "WAITING_FOR_USER"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-03",
+        "name": "search-indexer-staging",
+        "projectId": "proj-data",
+        "organizationId": "org-example",
+        "status": "WAITING_FOR_USER",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-03",
+          "status": "WAITING_FOR_USER"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-04",
+        "name": "billing-worker-prod",
+        "projectId": "proj-payments",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-04",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-05",
+        "name": "analytics-etl-dev",
+        "projectId": "proj-data",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-05",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-06",
+        "name": "edge-cache-prod",
+        "projectId": "proj-platform",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-06",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-07",
+        "name": "reporting-db-prod",
+        "projectId": "proj-data",
+        "organizationId": "org-example",
+        "status": "FAILED",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-07",
+          "status": "FAILURE"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-08",
+        "name": "identity-api-staging",
+        "projectId": "proj-platform",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-08",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-09",
+        "name": "queue-workers-dev",
+        "projectId": "proj-platform",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-09",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-10",
+        "name": "docs-site-preview",
+        "projectId": "proj-platform",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-10",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-11",
+        "name": "legacy-vpn",
+        "projectId": "proj-platform",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": null,
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-12",
+        "name": "old-batch-jobs",
+        "projectId": "proj-data",
+        "organizationId": "org-example",
+        "status": "WAITING_FOR_USER",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-12",
+          "status": "WAITING_FOR_USER"
+        },
+        "isArchived": true,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-13",
+        "name": "retired-gateway",
+        "projectId": "proj-platform",
+        "organizationId": "org-example",
+        "status": "INACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-13",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-14",
+        "name": "orphan-service-dev",
+        "projectId": "proj-unlisted",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-14",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-15",
+        "name": "<script>alert(1)</script>-prod",
+        "projectId": "proj-payments",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-15",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-16",
+        "name": "sandbox-bootstrap",
+        "projectId": "proj-data",
+        "organizationId": "org-example",
+        "status": "NEVER_DEPLOYED",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-16",
+          "status": "NEVER_DEPLOYED"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-17",
+        "name": "metrics-collector-prod",
+        "projectId": "proj-platform",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-17",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-18",
+        "name": "mail-relay-prod",
+        "projectId": "proj-payments",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-18",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-19",
+        "name": "ledger-archive-prod",
+        "projectId": "proj-payments",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-19",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-20",
+        "name": "shared/secrets",
+        "projectId": "proj-prod-region-a",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-20",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      },
+      {
+        "id": "env-21",
+        "name": "shared/secrets",
+        "projectId": "proj-stage-region-a",
+        "organizationId": "org-example",
+        "status": "ACTIVE",
+        "driftStatus": "DISABLED",
+        "workspaceName": "default",
+        "latestDeployment": {
+          "id": "dep-21",
+          "status": "SUCCESS"
+        },
+        "isArchived": false,
+        "isLocked": false,
+        "requiresApproval": true,
+        "createdAt": "2026-01-05T15:00:00.000Z",
+        "updatedAt": "2026-03-01T15:00:00.000Z",
+        "tags": {}
+      }
+    ],
+    "projects": [
+      {
+        "id": "proj-payments",
+        "name": "Payments",
+        "isArchived": false
+      },
+      {
+        "id": "proj-platform",
+        "name": "Platform",
+        "isArchived": false
+      },
+      {
+        "id": "proj-data",
+        "name": "Data",
+        "isArchived": false
+      },
+      {
+        "id": "proj-prod",
+        "name": "Production",
+        "isArchived": false
+      },
+      {
+        "id": "proj-stage",
+        "name": "Staging",
+        "isArchived": false
+      },
+      {
+        "id": "proj-prod-region-a",
+        "name": "region-a",
+        "parentProjectId": "proj-prod",
+        "isArchived": false
+      },
+      {
+        "id": "proj-stage-region-a",
+        "name": "region-a",
+        "parentProjectId": "proj-stage",
+        "isArchived": false
+      }
+    ],
+    "deployments": {
+      "dep-01": {
+        "id": "dep-01",
+        "environmentId": "env-01",
+        "status": "WAITING_FOR_USER",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "main",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-08T10:00:00.000Z",
+        "finishedAt": "2026-03-08T10:03:00.000Z"
+      },
+      "dep-02": {
+        "id": "dep-02",
+        "environmentId": "env-02",
+        "status": "WAITING_FOR_USER",
+        "type": "destroy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "main",
+        "startedBy": "operator@example.com",
+        "createdAt": "2026-03-10T10:48:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-03": {
+        "id": "dep-03",
+        "environmentId": "env-03",
+        "status": "WAITING_FOR_USER",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "feature/new-index",
+        "startedBy": "idp|000000000000",
+        "createdAt": "2026-03-10T13:59:30.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-04": {
+        "id": "dep-04",
+        "environmentId": "env-04",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "main",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-05": {
+        "id": "dep-05",
+        "environmentId": "env-05",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "v2.14.0",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-06": {
+        "id": "dep-06",
+        "environmentId": "env-06",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "a1b2c3d",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-07": {
+        "id": "dep-07",
+        "environmentId": "env-07",
+        "status": "FAILURE",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "0123456789abcdef0123456789abcdef01234567",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-08": {
+        "id": "dep-08",
+        "environmentId": "env-08",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-main",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-09": {
+        "id": "dep-09",
+        "environmentId": "env-09",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-develop",
+        "blueprintRevision": null,
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-10": {
+        "id": "dep-10",
+        "environmentId": "env-10",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-single-use",
+        "blueprintRevision": "",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-12": {
+        "id": "dep-12",
+        "environmentId": "env-12",
+        "status": "WAITING_FOR_USER",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "main",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-13": {
+        "id": "dep-13",
+        "environmentId": "env-13",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "feature/retired",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-14": {
+        "id": "dep-14",
+        "environmentId": "env-14",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "develop",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-15": {
+        "id": "dep-15",
+        "environmentId": "env-15",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "<img src=x onerror=alert(1)>",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-16": {
+        "id": "dep-16",
+        "environmentId": "env-16",
+        "status": "NEVER_DEPLOYED",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "feature/bootstrap",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z"
+      },
+      "dep-17": {
+        "id": "dep-17",
+        "environmentId": "env-17",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-unreadable",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-19": {
+        "id": "dep-19",
+        "environmentId": "env-19",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "feature/ledger-archive-retention-policy-and-cold-storage-tiering",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-20": {
+        "id": "dep-20",
+        "environmentId": "env-20",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "release/2026.03",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      },
+      "dep-21": {
+        "id": "dep-21",
+        "environmentId": "env-21",
+        "status": "SUCCESS",
+        "type": "deploy",
+        "blueprintId": "tpl-shared",
+        "blueprintRevision": "release/2026.03",
+        "startedBy": "env0-system",
+        "createdAt": "2026-03-02T16:00:00.000Z",
+        "finishedAt": "2026-03-02T16:04:00.000Z"
+      }
+    },
+    "templates": {
+      "tpl-main": {
+        "id": "tpl-main",
+        "name": "shared-stack",
+        "type": "terraform",
+        "repository": "https://git.example.com/acme-infra/shared.git",
+        "revision": "main"
+      },
+      "tpl-develop": {
+        "id": "tpl-develop",
+        "name": "dev-stack",
+        "type": "terraform",
+        "repository": "https://git.example.com/acme-infra/dev.git",
+        "revision": "develop"
+      },
+      "tpl-single-use": {
+        "id": "tpl-single-use",
+        "name": "single-use",
+        "type": "terragrunt",
+        "repository": "https://git.example.com/acme-infra/network.git"
+      }
+    },
+    "failures": {
+      "deployments": {
+        "dep-18": "env0 deployment get failed (exit 1, unknown): synthetic failure"
+      },
+      "templates": {
+        "tpl-unreadable": "env0 template get failed (exit 4, not_found): synthetic failure"
+      }
+    }
+  }
+}

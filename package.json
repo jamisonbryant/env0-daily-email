@@ -1,0 +1,19 @@
+{
+  "name": "env0-daily-email",
+  "version": "1.0.0",
+  "description": "Builds a daily HTML status email about the environments in an env0 organization.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node src/main.mjs",
+    "preview": "node src/preview.mjs",
+    "test": "node --test \"test/*.test.mjs\""
+  },
+  "dependencies": {
+    "mjml": "5.4.1"
+  }
+}

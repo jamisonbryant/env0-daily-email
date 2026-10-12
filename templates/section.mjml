@@ -1,0 +1,8 @@
+      <mj-section background-color="#ffffff" padding="20px 20px 0">
+        <mj-column>
+          <mj-divider border-width="1px" border-color="#e3e6ea" padding="0 0 20px" />
+          <mj-text font-size="16px" line-height="22px" font-weight="600">{{HEADING}}</mj-text>
+          <mj-text color="#5b6573" font-size="13px" line-height="19px" padding="4px 0 12px">{{DESCRIPTION}}</mj-text>
+          {{BODY}}
+        </mj-column>
+      </mj-section>

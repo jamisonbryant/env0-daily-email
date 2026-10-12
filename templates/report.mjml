@@ -1,0 +1,48 @@
+<mjml>
+  <mj-head>
+    <mj-title>{{SUBJECT}}</mj-title>
+    <mj-preview>{{PREHEADER}}</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" />
+      <mj-section padding="0" />
+      <mj-column padding="0" />
+      <mj-text color="#1d2430" font-size="14px" line-height="21px" padding="0" />
+      <mj-table color="#1d2430" font-size="14px" line-height="20px" padding="0" cellpadding="0" cellspacing="0" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#eef0f3" width="640px">
+    <mj-wrapper padding="24px 12px 0" background-color="#eef0f3">
+
+      <!-- Title and date -->
+      <mj-section background-color="#ffffff" border-top="3px solid #1f5a96" padding="28px 20px 8px">
+        <mj-column>
+          <mj-text font-size="22px" line-height="28px" font-weight="600">{{TITLE}}</mj-text>
+          <mj-text color="#5b6573" padding="6px 0 0">{{DATE_LINE}}</mj-text>
+        </mj-column>
+      </mj-section>
+
+      <!-- Summary figures -->
+      <mj-section background-color="#ffffff" padding="16px 14px 8px">
+        <mj-group>
+          {{SUMMARY}}
+        </mj-group>
+      </mj-section>
+
+      {{SECTIONS}}
+
+      <mj-section background-color="#ffffff" padding="0 0 12px">
+        <mj-column>
+          <mj-spacer height="12px" />
+        </mj-column>
+      </mj-section>
+
+      <!-- Footer -->
+      <mj-section background-color="#eef0f3" padding="16px 20px 32px">
+        <mj-column>
+          <mj-text color="#5b6573" font-size="12px" line-height="18px">{{FOOTER}}</mj-text>
+        </mj-column>
+      </mj-section>
+
+    </mj-wrapper>
+  </mj-body>
+</mjml>
